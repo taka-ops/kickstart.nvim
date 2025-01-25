@@ -605,9 +605,9 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -700,7 +700,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
@@ -888,7 +888,23 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+        'python',
+        'javascript',
+        'typescript',
+        'tsx',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -918,23 +934,69 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
+  -- require 'custom.plugins.flutter_tool',
   require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
-
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.treej',
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   {
     'kdheepak/lazygit.nvim',
     keys = {
       { '<leader>lg', ':LazyGit<CR>', desc = 'LazyGit' },
     },
+  },
+  {
+    'numToStr/Comment.nvim',
+    opts = {
+      toggler = {
+        line = 'gcc', -- Line-comment keymap
+        block = 'gbc', -- Block-comment keymap
+      },
+      opleader = {
+        line = 'gc', -- Line-comment in Visual/Operator mode
+        block = 'gb', -- Block-comment in Visual/Operator mode
+      },
+      extra = {
+        above = 'gcO', -- Comment above the current line
+        below = 'gco', -- Comment below the current line
+        eol = 'gcA', -- Comment at the end of the line
+      },
+    },
+  },
+  -- {
+  --   'Pocco81/auto-save.nvim',
+  --   event = 'InsertLeave', -- どのイベントで起動するか
+  --   config = function()
+  --     require('auto-save').setup {
+  --       -- 任意の設定を追加可能
+  --       trigger_events = { 'InsertLeave', 'TextChanged' }, -- 自動保存を行うイベント
+  --     }
+  --   end,
+  -- },
+  { -- null-lsプラグインの設定
+    'jose-elias-alvarez/null-ls.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim' }, -- 依存関係
+    config = function()
+      local null_ls = require 'null-ls'
+
+      -- フォーマッタやリンターの設定
+      null_ls.setup {
+        sources = {
+          -- 例えば、ESLint や Prettier を使用する設定
+          null_ls.builtins.diagnostics.eslint,
+          null_ls.builtins.formatting.prettier,
+          -- Python向けのフォーマッタ (black) なども設定可能
+        },
+      }
+    end,
   },
 }, {
   ui = {
@@ -961,3 +1023,24 @@ require('lazy').setup({
 -- vim: ts=2 sts=2 sw=2 et
 
 vim.keymap.set('i', 'jj', '<Esc>', { silent = true })
+vim.api.nvim_set_keymap('n', '<leader>cc', ':w<CR>:!g++ -std=c++11 % -o %:r && %:r < %:p:h/input.txt<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>cm', ':!time %:r<CR>', { noremap = true, silent = true })
+
+vim.api.nvim_create_autocmd('BufNewFile', {
+  pattern = '*.cpp',
+  command = '0r ~/.config/nvim/templates/template.cpp',
+})
+
+-- Flutterの設定
+-- -- キーマッピングを設定
+vim.keymap.set('n', '<leader>Fr', ':!flutter run<CR>', { silent = true, desc = 'Flutter Run' })
+vim.keymap.set('n', '<leader>Fd', ':!flutter devices<CR>', { silent = true, desc = 'Flutter Devices' })
+vim.keymap.set('n', '<leader>Fe', ':!flutter emulators<CR>', { silent = true, desc = 'Flutter Emulators' })
+vim.keymap.set('n', '<leader>Fl', ':!flutter logs<CR>', { silent = true, desc = 'Flutter Logs' })
+vim.keymap.set('n', '<leader>Fc', ':!flutter clean<CR>', { silent = true, desc = 'Flutter Clean' })
+vim.keymap.set('n', '<leader>Fp', ':!flutter pub get<CR>', { silent = true, desc = 'Flutter Pub Get' })
+vim.keymap.set('n', '<leader>FD', ':!flutter doctor<CR>', { silent = true, desc = 'Flutter Doctor' })
+
+-- エミュレータを直接起動するマッピング
+vim.keymap.set('n', '<leader>Fea', ':!flutter emulators --launch Pixel_3a_API_34<CR>', { silent = true, desc = 'Launch Android Emulator' })
+vim.keymap.set('n', '<leader>Fei', ':!flutter emulators --launch apple_ios_simulator<CR>', { silent = true, desc = 'Launch iOS Simulator' })
